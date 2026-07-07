@@ -3,1543 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>围棋棋谱播放器</title>
+    <title>围棋棋谱播放器 - WGo Edition</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/wgo@2.3.1/wgo/player.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .header h1 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-icon {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-icon:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* Info Panel */
-        .info-panel {
-            background: white;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e0e0e0;
-            flex-shrink: 0;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px 16px;
-            font-size: 13px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .info-label {
-            color: #888;
-            font-size: 11px;
-        }
-
-        .info-value {
-            color: #333;
-            font-weight: 500;
-        }
-
-        .player-black { color: #000; }
-        .player-white { color: #666; }
-
-        /* Board Container */
-        .board-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-            overflow: auto;
-        }
-
-        .board-wrapper {
-            position: relative;
-            background: #dcb35c;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .board {
-            position: relative;
-            background: #dcb35c;
-        }
-
-        .grid-line {
-            position: absolute;
-            background: #000;
-        }
-
-        .grid-line.horizontal {
-            height: 1px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .grid-line.vertical {
-            width: 1px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .star-point {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #000;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .stone {
-            position: absolute;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
-        }
-
-        .stone.black {
-            background: radial-gradient(circle at 30% 30%, #444, #000);
-            color: white;
-        }
-
-        .stone.white {
-            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
-            color: #333;
-            border: 1px solid #ccc;
-        }
-
-        .stone.trial {
-            background: radial-gradient(circle at 30% 30%, #6bb9f0, #3498db);
-            color: white;
-            border: 2px solid #2980b9;
-        }
-
-        .last-move-marker {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #e74c3c;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-
-        /* Controls */
-        .controls {
-            background: white;
-            padding: 16px;
-            border-top: 1px solid #e0e0e0;
-            flex-shrink: 0;
-        }
-
-        .move-info {
-            text-align: center;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .move-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .btn-control {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            min-width: 50px;
-        }
-
-        .btn-control:hover {
-            background: #2980b9;
-        }
-
-        .btn-control:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-
-        .btn-control.primary {
-            background: #2ecc71;
-            min-width: 70px;
-        }
-
-        .btn-control.primary:hover {
-            background: #27ae60;
-        }
-
-        /* Actions */
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .btn-action {
-            flex: 1;
-            min-width: 140px;
-            background: #95a5a6;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-action:hover {
-            background: #7f8c8d;
-        }
-
-        .btn-action.active {
-            background: #e67e22;
-        }
-
-        .btn-action.active:hover {
-            background: #d35400;
-        }
-
-        /* Upload Area */
-        .upload-area {
-            border: 2px dashed #bdc3c7;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            color: #7f8c8d;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 12px;
-        }
-
-        .upload-area:hover,
-        .upload-area.dragover {
-            border-color: #3498db;
-            background: #ecf0f1;
-            color: #3498db;
-        }
-
-        .upload-area input {
-            display: none;
-        }
-
-        /* Share Section */
-        .share-section {
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 12px;
-        }
-
-        .share-input-wrapper {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .share-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 12px;
-            background: white;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .btn-copy {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            flex-shrink: 0;
-        }
-
-        .btn-copy:hover {
-            background: #229954;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: transform 0.3s;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* PC Layout */
-        @media (min-width: 768px) {
-            body {
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-content: flex-start;
-            }
-
-            .header {
-                width: 100%;
-                padding: 16px 24px;
-            }
-
-            .header h1 {
-                font-size: 22px;
-            }
-
-            .info-panel {
-                width: 100%;
-                padding: 16px 24px;
-            }
-
-            .info-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 16px 24px;
-                font-size: 14px;
-            }
-
-            .board-container {
-                width: calc(100% - 320px);
-                min-height: calc(100vh - 140px);
-                padding: 24px;
-            }
-
-            .controls {
-                width: 320px;
-                min-height: calc(100vh - 140px);
-                border-top: none;
-                border-left: 1px solid #e0e0e0;
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .actions {
-                flex-direction: column;
-            }
-
-            .btn-action {
-                min-width: auto;
-            }
-
-            .upload-area {
-                padding: 30px 20px;
-            }
-        }
-
-        /* Hidden file input */
-        #fileInput {
-            display: none;
-        }
+        :root { --primary-color: #4a90e2; --bg-color: #f5f5f7; --board-bg: #dcceab; --text-color: #333; --border-color: #ddd; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .header-title { font-weight: 600; font-size: 16px; }
+        .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #666; }
+        #info-panel { background: #fff; padding: 10px 15px; border-bottom: 1px solid var(--border-color); font-size: 13px; flex-shrink: 0; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .info-label { color: #888; }
+        .info-value { font-weight: 500; }
+        .capture-info { font-size: 12px; color: #666; margin-top: 2px; }
+        #board-container { flex: 1; display: flex; justify-content: center; align-items: center; background: #e0e0e0; position: relative; overflow: hidden; min-height: 300px; }
+        #wgo-board { box-shadow: 0 4px 12px rgba(0,0,0,0.15); background-color: var(--board-bg); max-width: 100%; max-height: 100%; }
+        #controls { background: #fff; padding: 15px; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+        .control-bar { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
+        .ctrl-btn { background: #f0f0f0; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: background 0.2s; }
+        .ctrl-btn:active { background: #d0d0d0; }
+        .move-count { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 80px; text-align: center; }
+        .action-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .action-btn { padding: 10px; border: 1px solid var(--border-color); background: #fff; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .action-btn.active { background: #e6f0ff; border-color: var(--primary-color); color: var(--primary-color); font-weight: 600; }
+        #drop-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 15px; text-align: center; color: #888; font-size: 13px; margin-bottom: 10px; transition: all 0.2s; }
+        #drop-zone.dragover { border-color: var(--primary-color); background: #f0f7ff; color: var(--primary-color); }
+        #file-input { display: none; }
+        .share-box { display: flex; gap: 8px; }
+        #share-url { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: #f9f9f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .copy-btn { padding: 0 12px; background: var(--primary-color); color: white; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <h1>🎴 围棋棋谱播放器</h1>
-        <div class="header-actions">
-            <button class="btn-icon" onclick="showHelp()">❓</button>
-            <button class="btn-icon" onclick="document.getElementById('fileInput').click()">📁</button>
-        </div>
-    </header>
-
-    <!-- Info Panel -->
-    <div class="info-panel">
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">黑方</span>
-                <span class="info-value player-black" id="blackPlayer">-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">白方</span>
-                <span class="info-value player-white" id="whitePlayer">-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">黑提子</span>
-                <span class="info-value" id="blackCaptures">0</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">白提子</span>
-                <span class="info-value" id="whiteCaptures">0</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">贴目</span>
-                <span class="info-value" id="komi">-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">规则</span>
-                <span class="info-value" id="rules">-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">结果</span>
-                <span class="info-value" id="result">-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">日期</span>
-                <span class="info-value" id="date">-</span>
-            </div>
-        </div>
+<header>
+    <button class="icon-btn" onclick="history.back()">✕</button>
+    <div class="header-title">围棋棋谱</div>
+    <button class="icon-btn" onclick="generateShareLink()">🔗</button>
+</header>
+<div id="info-panel">
+    <div class="info-row"><span class="info-label">黑方:</span><span class="info-value" id="player-black">-</span></div>
+    <div class="info-row"><span class="info-label">白方:</span><span class="info-value" id="player-white">-</span></div>
+    <div class="info-row capture-info"><span id="capture-display">提子: 黑 0 / 白 0</span><span id="rule-display" style="margin-left: 10px;">贴目: -</span></div>
+</div>
+<div id="board-container"><div id="wgo-board"></div></div>
+<div id="controls">
+    <div class="control-bar">
+        <button class="ctrl-btn" onclick="player.first()" title="首手">⏮</button>
+        <button class="ctrl-btn" onclick="player.previous()" title="上一手">◀</button>
+        <span class="move-count" id="move-display">0 / 0</span>
+        <button class="ctrl-btn" onclick="player.next()" title="下一手">▶</button>
+        <button class="ctrl-btn" onclick="player.last()" title="末手">⏭</button>
     </div>
-
-    <!-- Board -->
-    <div class="board-container">
-        <div class="board-wrapper" id="boardWrapper">
-            <div class="board" id="board"></div>
-        </div>
+    <div class="action-area">
+        <label class="action-btn"><input type="file" id="file-input" accept=".sgf,.txt">📁 上传 SGF</label>
+        <button class="action-btn" id="trial-mode-btn" onclick="toggleTrialMode()">🔄 试下模式 <span id="trial-status">(关)</span></button>
     </div>
+    <div id="drop-zone">拖拽 SGF 文件到此处或直接点击上传</div>
+    <div class="share-box"><input type="text" id="share-url" readonly placeholder="生成分享链接..."><button class="copy-btn" onclick="copyLink()">复制</button></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/wgo@2.3.1/wgo.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/wgo@2.3.1/wgo/player.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+<script>
+let player = null, sgfContent = "", isTrialMode = false, trialMoves = [];
 
-    <!-- Controls -->
-    <div class="controls">
-        <div class="move-info" id="moveInfo">第 0 手 / 共 0 手</div>
-        
-        <div class="move-buttons">
-            <button class="btn-control" onclick="goToStart()" title="首手">⏮</button>
-            <button class="btn-control" onclick="previousMove()" title="上一手">◀</button>
-            <button class="btn-control primary" onclick="nextMove()" title="下一手">▶</button>
-            <button class="btn-control" onclick="goToEnd()" title="末手">⏭</button>
-        </div>
+document.addEventListener('DOMContentLoaded', () => {
+    initFromURL();
+    setupEventListeners();
+    if (!player) loadEmptyBoard();
+});
 
-        <div class="actions">
-            <button class="btn-action" id="trialBtn" onclick="toggleTrialMode()">
-                🔄 试下模式：<span id="trialStatus">关闭</span>
-            </button>
-            <button class="btn-action" onclick="document.getElementById('fileInput').click()">
-                📤 上传 SGF
-            </button>
-        </div>
+function setupEventListeners() {
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', handleFileSelect);
+    const dropZone = document.getElementById('drop-zone');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
+    });
+    dropZone.addEventListener('click', () => fileInput.click());
+}
 
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-            <input type="file" id="fileInput" accept=".sgf,.txt" onchange="handleFileSelect(event)">
-            <p>📁 点击或拖拽 SGF 文件到此处</p>
-            <p style="font-size: 12px; margin-top: 4px;">支持 .sgf 和 .txt 格式</p>
-        </div>
+function handleFileSelect(event) {
+    if (event.target.files.length > 0) processFile(event.target.files[0]);
+}
 
-        <div class="share-section">
-            <strong>🔗 分享链接</strong>
-            <div class="share-input-wrapper">
-                <input type="text" class="share-input" id="shareUrl" readonly placeholder="生成压缩后的分享链接...">
-                <button class="btn-copy" onclick="copyShareUrl()">复制</button>
-            </div>
-        </div>
-    </div>
+function processFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => loadSGF(e.target.result);
+    reader.readAsText(file);
+}
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+function initFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const compressedSgf = params.get('sgf');
+    if (compressedSgf) {
+        try {
+            const decompressed = LZString.decompressFromEncodedURIComponent(compressedSgf);
+            if (decompressed) loadSGF(decompressed);
+            else alert("棋谱数据损坏");
+        } catch (err) { alert("无法解析 URL 参数"); }
+    }
+}
 
-    <script>
-        // ==================== LZ-String Compression Library ====================
-        var LZString = (function() {
-            var f = String.fromCharCode;
-            var keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-            var baseReverseDic = {};
-            
-            function getBaseValue(alphabet, character) {
-                if (!baseReverseDic[alphabet]) {
-                    baseReverseDic[alphabet] = {};
-                    for (var i = 0; i < alphabet.length; i++) {
-                        baseReverseDic[alphabet][alphabet.charAt(i)] = i;
-                    }
-                }
-                return baseReverseDic[alphabet][character];
-            }
-            
-            var LZString = {
-                compressToBase64: function(input) {
-                    if (input == null) return "";
-                    var res = LZString._compress(input, 6, function(a) { return keyStrBase64.charAt(a); });
-                    switch (res.length % 4) {
-                        case 0: return res;
-                        case 1: return res + "===";
-                        case 2: return res + "==";
-                        case 3: return res + "=";
-                    }
-                },
-                
-                decompressFromBase64: function(input) {
-                    if (input == null) return "";
-                    if (input == "") return null;
-                    return LZString._decompress(input.length, 32, function(index) { return getBaseValue(keyStrBase64, input.charAt(index)); });
-                },
-                
-                _compress: function(uncompressed, bitsPerChar, getCharFromInt) {
-                    if (uncompressed == null) return "";
-                    var i, value,
-                        context_dictionary = {},
-                        context_dictionaryToCreate = {},
-                        context_c = "",
-                        context_wc = "",
-                        context_w = "",
-                        context_enlargeIn = 2,
-                        context_dictSize = 3,
-                        context_numBits = 2,
-                        context_data = [],
-                        context_data_val = 0,
-                        context_data_position = 0,
-                        ii;
-                    
-                    for (ii = 0; ii < uncompressed.length; ii += 1) {
-                        context_c = uncompressed.charAt(ii);
-                        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
-                            context_dictionary[context_c] = context_dictSize++;
-                            context_dictionaryToCreate[context_c] = true;
-                        }
-                        
-                        context_wc = context_w + context_c;
-                        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
-                            context_w = context_wc;
-                        } else {
-                            if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
-                                if (context_w.charCodeAt(0) < 256) {
-                                    for (i = 0; i < context_numBits; i++) {
-                                        context_data_val = (context_data_val << 1);
-                                        if (context_data_position == bitsPerChar - 1) {
-                                            context_data_position = 0;
-                                            context_data.push(getCharFromInt(context_data_val));
-                                            context_data_val = 0;
-                                        } else {
-                                            context_data_position++;
-                                        }
-                                    }
-                                    value = context_w.charCodeAt(0);
-                                    for (i = 0; i < 8; i++) {
-                                        context_data_val = (context_data_val << 1) | (value & 1);
-                                        if (context_data_position == bitsPerChar - 1) {
-                                            context_data_position = 0;
-                                            context_data.push(getCharFromInt(context_data_val));
-                                            context_data_val = 0;
-                                        } else {
-                                            context_data_position++;
-                                        }
-                                        value = value >> 1;
-                                    }
-                                } else {
-                                    value = 1;
-                                    for (i = 0; i < context_numBits; i++) {
-                                        context_data_val = (context_data_val << 1) | value;
-                                        if (context_data_position == bitsPerChar - 1) {
-                                            context_data_position = 0;
-                                            context_data.push(getCharFromInt(context_data_val));
-                                            context_data_val = 0;
-                                        } else {
-                                            context_data_position++;
-                                        }
-                                        value = 0;
-                                    }
-                                    value = context_w.charCodeAt(0);
-                                    for (i = 0; i < 16; i++) {
-                                        context_data_val = (context_data_val << 1) | (value & 1);
-                                        if (context_data_position == bitsPerChar - 1) {
-                                            context_data_position = 0;
-                                            context_data.push(getCharFromInt(context_data_val));
-                                            context_data_val = 0;
-                                        } else {
-                                            context_data_position++;
-                                        }
-                                        value = value >> 1;
-                                    }
-                                }
-                                context_enlargeIn--;
-                                if (context_enlargeIn == 0) {
-                                    context_enlargeIn = Math.pow(2, context_numBits);
-                                    context_numBits++;
-                                }
-                                delete context_dictionaryToCreate[context_w];
-                            } else {
-                                value = context_dictionary[context_w];
-                                for (i = 0; i < context_numBits; i++) {
-                                    context_data_val = (context_data_val << 1) | (value & 1);
-                                    if (context_data_position == bitsPerChar - 1) {
-                                        context_data_position = 0;
-                                        context_data.push(getCharFromInt(context_data_val));
-                                        context_data_val = 0;
-                                    } else {
-                                        context_data_position++;
-                                    }
-                                    value = value >> 1;
-                                }
-                            }
-                            context_enlargeIn--;
-                            if (context_enlargeIn == 0) {
-                                context_enlargeIn = Math.pow(2, context_numBits);
-                                context_numBits++;
-                            }
-                            context_dictionary[context_wc] = context_dictSize++;
-                            context_w = String(context_c);
-                        }
-                    }
-                    
-                    if (context_w !== "") {
-                        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
-                            if (context_w.charCodeAt(0) < 256) {
-                                for (i = 0; i < context_numBits; i++) {
-                                    context_data_val = (context_data_val << 1);
-                                    if (context_data_position == bitsPerChar - 1) {
-                                        context_data_position = 0;
-                                        context_data.push(getCharFromInt(context_data_val));
-                                        context_data_val = 0;
-                                    } else {
-                                        context_data_position++;
-                                    }
-                                }
-                                value = context_w.charCodeAt(0);
-                                for (i = 0; i < 8; i++) {
-                                    context_data_val = (context_data_val << 1) | (value & 1);
-                                    if (context_data_position == bitsPerChar - 1) {
-                                        context_data_position = 0;
-                                        context_data.push(getCharFromInt(context_data_val));
-                                        context_data_val = 0;
-                                    } else {
-                                        context_data_position++;
-                                    }
-                                    value = value >> 1;
-                                }
-                            } else {
-                                value = 1;
-                                for (i = 0; i < context_numBits; i++) {
-                                    context_data_val = (context_data_val << 1) | value;
-                                    if (context_data_position == bitsPerChar - 1) {
-                                        context_data_position = 0;
-                                        context_data.push(getCharFromInt(context_data_val));
-                                        context_data_val = 0;
-                                    } else {
-                                        context_data_position++;
-                                    }
-                                    value = 0;
-                                }
-                                value = context_w.charCodeAt(0);
-                                for (i = 0; i < 16; i++) {
-                                    context_data_val = (context_data_val << 1) | (value & 1);
-                                    if (context_data_position == bitsPerChar - 1) {
-                                        context_data_position = 0;
-                                        context_data.push(getCharFromInt(context_data_val));
-                                        context_data_val = 0;
-                                    } else {
-                                        context_data_position++;
-                                    }
-                                    value = value >> 1;
-                                }
-                            }
-                            context_enlargeIn--;
-                            if (context_enlargeIn == 0) {
-                                context_enlargeIn = Math.pow(2, context_numBits);
-                                context_numBits++;
-                            }
-                            delete context_dictionaryToCreate[context_w];
-                        } else {
-                            value = context_dictionary[context_w];
-                            for (i = 0; i < context_numBits; i++) {
-                                context_data_val = (context_data_val << 1) | (value & 1);
-                                if (context_data_position == bitsPerChar - 1) {
-                                    context_data_position = 0;
-                                    context_data.push(getCharFromInt(context_data_val));
-                                    context_data_val = 0;
-                                } else {
-                                    context_data_position++;
-                                }
-                                value = value >> 1;
-                            }
-                        }
-                        context_enlargeIn--;
-                        if (context_enlargeIn == 0) {
-                            context_enlargeIn = Math.pow(2, context_numBits);
-                            context_numBits++;
-                        }
-                    }
-                    
-                    value = 2;
-                    for (i = 0; i < context_numBits; i++) {
-                        context_data_val = (context_data_val << 1) | (value & 1);
-                        if (context_data_position == bitsPerChar - 1) {
-                            context_data_position = 0;
-                            context_data.push(getCharFromInt(context_data_val));
-                            context_data_val = 0;
-                        } else {
-                            context_data_position++;
-                        }
-                        value = value >> 1;
-                    }
-                    
-                    while (true) {
-                        context_data_val = (context_data_val << 1);
-                        if (context_data_position == bitsPerChar - 1) {
-                            context_data.push(getCharFromInt(context_data_val));
-                            break;
-                        } else context_data_position++;
-                    }
-                    return context_data.join('');
-                },
-                
-                _decompress: function(length, resetValue, getNextValue) {
-                    var dictionary = [],
-                        next,
-                        enlargeIn = 4,
-                        dictSize = 4,
-                        numBits = 3,
-                        entry = "",
-                        result = [],
-                        i,
-                        w,
-                        bits, resb, maxpower, power,
-                        c,
-                        data = { val: getNextValue(0), position: resetValue, index: 1 };
-                    
-                    for (i = 0; i < 3; i += 1) {
-                        dictionary[i] = i;
-                    }
-                    
-                    bits = 0;
-                    maxpower = Math.pow(2, 2);
-                    power = 1;
-                    while (power != maxpower) {
-                        resb = data.val & data.position;
-                        data.position >>= 1;
-                        if (data.position == 0) {
-                            data.position = resetValue;
-                            data.val = getNextValue(data.index++);
-                        }
-                        bits |= (resb > 0 ? 1 : 0) * power;
-                        power <<= 1;
-                    }
-                    
-                    switch (next = bits) {
-                        case 0:
-                            bits = 0;
-                            maxpower = Math.pow(2, 8);
-                            power = 1;
-                            while (power != maxpower) {
-                                resb = data.val & data.position;
-                                data.position >>= 1;
-                                if (data.position == 0) {
-                                    data.position = resetValue;
-                                    data.val = getNextValue(data.index++);
-                                }
-                                bits |= (resb > 0 ? 1 : 0) * power;
-                                power <<= 1;
-                            }
-                            c = f(bits);
-                            break;
-                        case 1:
-                            bits = 0;
-                            maxpower = Math.pow(2, 16);
-                            power = 1;
-                            while (power != maxpower) {
-                                resb = data.val & data.position;
-                                data.position >>= 1;
-                                if (data.position == 0) {
-                                    data.position = resetValue;
-                                    data.val = getNextValue(data.index++);
-                                }
-                                bits |= (resb > 0 ? 1 : 0) * power;
-                                power <<= 1;
-                            }
-                            c = f(bits);
-                            break;
-                        case 2:
-                            return "";
-                    }
-                    dictionary[3] = c;
-                    w = c;
-                    result.push(c);
-                    while (true) {
-                        if (data.index > length) {
-                            return "";
-                        }
-                        
-                        bits = 0;
-                        maxpower = Math.pow(2, numBits);
-                        power = 1;
-                        while (power != maxpower) {
-                            resb = data.val & data.position;
-                            data.position >>= 1;
-                            if (data.position == 0) {
-                                data.position = resetValue;
-                                data.val = getNextValue(data.index++);
-                            }
-                            bits |= (resb > 0 ? 1 : 0) * power;
-                            power <<= 1;
-                        }
-                        
-                        switch (c = bits) {
-                            case 0:
-                                bits = 0;
-                                maxpower = Math.pow(2, 8);
-                                power = 1;
-                                while (power != maxpower) {
-                                    resb = data.val & data.position;
-                                    data.position >>= 1;
-                                    if (data.position == 0) {
-                                        data.position = resetValue;
-                                        data.val = getNextValue(data.index++);
-                                    }
-                                    bits |= (resb > 0 ? 1 : 0) * power;
-                                    power <<= 1;
-                                }
-                                
-                                dictionary[dictSize++] = f(bits);
-                                c = dictSize - 1;
-                                enlargeIn--;
-                                break;
-                            case 1:
-                                bits = 0;
-                                maxpower = Math.pow(2, 16);
-                                power = 1;
-                                while (power != maxpower) {
-                                    resb = data.val & data.position;
-                                    data.position >>= 1;
-                                    if (data.position == 0) {
-                                        data.position = resetValue;
-                                        data.val = getNextValue(data.index++);
-                                    }
-                                    bits |= (resb > 0 ? 1 : 0) * power;
-                                    power <<= 1;
-                                }
-                                dictionary[dictSize++] = f(bits);
-                                c = dictSize - 1;
-                                enlargeIn--;
-                                break;
-                            case 2:
-                                return result.join('');
-                        }
-                        
-                        if (enlargeIn == 0) {
-                            enlargeIn = Math.pow(2, numBits);
-                            numBits++;
-                        }
-                        
-                        if (dictionary[c]) {
-                            entry = dictionary[c];
-                        } else {
-                            if (c === dictSize) {
-                                entry = w + w.charAt(0);
-                            } else {
-                                return null;
-                            }
-                        }
-                        result.push(entry);
-                        
-                        dictionary[dictSize++] = w + entry.charAt(0);
-                        enlargeIn--;
-                        
-                        if (enlargeIn == 0) {
-                            enlargeIn = Math.pow(2, numBits);
-                            numBits++;
-                        }
-                        
-                        w = entry;
-                    }
-                }
-            };
-            return LZString;
-        })();
+function loadEmptyBoard() {
+    loadSGF("(;GM[1]FF[4]CA[UTF-8]AP[WGo.js]ST[2]RU[Chinese]SZ[19]KM[7.5])");
+}
 
-        // ==================== SGF Parser ====================
-        class SGFParser {
-            constructor(sgfText) {
-                this.sgfText = sgfText.trim();
-                this.moves = [];
-                this.properties = {};
-                this.parse();
-            }
-
-            parse() {
-                // Extract root properties
-                const rootMatch = this.sgfText.match(/\((;FF\[?\d*\]?)([^;]*?)\[/);
-                if (rootMatch) {
-                    const propsSection = this.sgfText.substring(
-                        this.sgfText.indexOf(';'),
-                        this.sgfText.indexOf(';', this.sgfText.indexOf(';') + 1) !== -1 
-                            ? this.sgfText.indexOf(';', this.sgfText.indexOf(';') + 1)
-                            : this.sgfText.lastIndexOf(')')
-                    );
-                    this.extractProperties(propsSection);
-                }
-
-                // Parse moves
-                this.parseMoves();
-            }
-
-            extractProperties(section) {
-                const propPatterns = [
-                    ['PB', 'blackName'],
-                    ['PW', 'whiteName'],
-                    ['KM', 'komi'],
-                    ['RU', 'rules'],
-                    ['RE', 'result'],
-                    ['DT', 'date'],
-                    ['EV', 'event'],
-                    ['PC', 'place'],
-                    ['GN', 'gameName']
-                ];
-
-                propPatterns.forEach(([sgfKey, jsKey]) => {
-                    const regex = new RegExp(`${sgfKey}\\[([^\\]]*)\\]`, 'i');
-                    const match = section.match(regex);
-                    if (match) {
-                        this.properties[jsKey] = match[1].trim();
-                    }
-                });
-            }
-
-            parseMoves() {
-                let pos = this.sgfText.indexOf(';');
-                if (pos === -1) return;
-
-                let moveNumber = 0;
-                let blackCaptures = 0;
-                let whiteCaptures = 0;
-
-                while (pos !== -1 && pos < this.sgfText.length) {
-                    const nextSemi = this.sgfText.indexOf(';', pos + 1);
-                    const endBracket = this.sgfText.indexOf(')', pos);
-                    
-                    let sectionEnd = nextSemi !== -1 ? nextSemi : endBracket;
-                    if (sectionEnd === -1) sectionEnd = this.sgfText.length;
-
-                    const section = this.sgfText.substring(pos, sectionEnd);
-
-                    // Check for B or W move
-                    const blackMove = section.match(/B\[([a-z]{2})\]/i);
-                    const whiteMove = section.match(/W\[([a-z]{2})\]/i);
-
-                    if (blackMove || whiteMove) {
-                        moveNumber++;
-                        const coord = blackMove ? blackMove[1] : whiteMove[1];
-                        const color = blackMove ? 'B' : 'W';
-                        
-                        // Parse coordinates
-                        const x = coord.charCodeAt(0) - 'a'.charCodeAt(0);
-                        const y = coord.charCodeAt(1) - 'a'.charCodeAt(0);
-
-                        // Check for captures (MA or SL with previous position)
-                        const captures = section.match(/MA\[([a-z]{2})\]/gi) || [];
-                        
-                        this.moves.push({
-                            number: moveNumber,
-                            color: color,
-                            x: x,
-                            y: y,
-                            captures: captures.length
-                        });
-
-                        if (color === 'B') {
-                            blackCaptures += captures.length;
-                        } else {
-                            whiteCaptures += captures.length;
-                        }
-                    }
-
-                    pos = nextSemi;
-                }
-
-                this.properties.blackCaptures = blackCaptures;
-                this.properties.whiteCaptures = whiteCaptures;
-            }
-
-            getProperties() {
-                return this.properties;
-            }
-
-            getMoves() {
-                return this.moves;
-            }
-        }
-
-        // ==================== Go Board ====================
-        class GoBoard {
-            constructor(containerId, size = 19) {
-                this.size = size;
-                this.container = document.getElementById(containerId);
-                this.wrapper = document.getElementById('boardWrapper');
-                this.cellSize = 0;
-                this.stones = {};
-                this.trialStones = [];
-                this.lastMove = null;
-                
-                this.init();
-            }
-
-            init() {
-                this.resize();
-                window.addEventListener('resize', () => this.resize());
-                this.drawGrid();
-                this.drawStarPoints();
-            }
-
-            resize() {
-                const containerWidth = this.container.parentElement.clientWidth;
-                const maxSize = Math.min(containerWidth - 32, 600);
-                const size = Math.max(280, maxSize);
-                
-                this.wrapper.style.width = size + 'px';
-                this.wrapper.style.height = size + 'px';
-                
-                this.cellSize = size / (this.size + 1);
-                
-                this.container.style.width = size + 'px';
-                this.container.style.height = size + 'px';
-                
-                this.redraw();
-            }
-
-            drawGrid() {
-                this.container.innerHTML = '';
-                
-                // Horizontal lines
-                for (let i = 0; i < this.size; i++) {
-                    const line = document.createElement('div');
-                    line.className = 'grid-line horizontal';
-                    line.style.width = (this.cellSize * (this.size - 1)) + 'px';
-                    line.style.top = (this.cellSize * (i + 1)) + 'px';
-                    this.container.appendChild(line);
-                }
-                
-                // Vertical lines
-                for (let i = 0; i < this.size; i++) {
-                    const line = document.createElement('div');
-                    line.className = 'grid-line vertical';
-                    line.style.height = (this.cellSize * (this.size - 1)) + 'px';
-                    line.style.left = (this.cellSize * (i + 1)) + 'px';
-                    this.container.appendChild(line);
-                }
-            }
-
-            drawStarPoints() {
-                const stars = this.size === 19 ? [3, 9, 15] : 
-                             this.size === 13 ? [3, 6, 9] : 
-                             this.size === 9 ? [2, 4, 6] : [];
-                
-                stars.forEach(x => {
-                    stars.forEach(y => {
-                        const star = document.createElement('div');
-                        star.className = 'star-point';
-                        star.style.left = (this.cellSize * (x + 1)) + 'px';
-                        star.style.top = (this.cellSize * (y + 1)) + 'px';
-                        this.container.appendChild(star);
-                    });
-                });
-            }
-
-            placeStone(x, y, color, moveNumber, isTrial = false) {
-                const key = `${x},${y}`;
-                
-                // Remove existing stone at this position
-                const existing = this.container.querySelector(`.stone[data-x="${x}"][data-y="${y}"]`);
-                if (existing) existing.remove();
-                
-                const stone = document.createElement('div');
-                stone.className = `stone ${color.toLowerCase()} ${isTrial ? 'trial' : ''}`;
-                stone.style.left = (this.cellSize * (x + 1)) + 'px';
-                stone.style.top = (this.cellSize * (y + 1)) + 'px';
-                stone.style.width = (this.cellSize * 0.9) + 'px';
-                stone.style.height = (this.cellSize * 0.9) + 'px';
-                stone.style.fontSize = (this.cellSize * 0.35) + 'px';
-                stone.dataset.x = x;
-                stone.dataset.y = y;
-                
-                if (moveNumber) {
-                    stone.textContent = moveNumber;
-                }
-                
-                this.container.appendChild(stone);
-                this.stones[key] = { color, moveNumber, isTrial };
-                
-                if (!isTrial) {
-                    this.updateLastMove(x, y);
-                }
-            }
-
-            removeStone(x, y) {
-                const key = `${x},${y}`;
-                const stone = this.container.querySelector(`.stone[data-x="${x}"][data-y="${y}"]`);
-                if (stone) stone.remove();
-                delete this.stones[key];
-            }
-
-            updateLastMove(x, y) {
-                // Remove old marker
-                const oldMarker = this.container.querySelector('.last-move-marker');
-                if (oldMarker) oldMarker.remove();
-                
-                if (x !== null && y !== null) {
-                    const marker = document.createElement('div');
-                    marker.className = 'last-move-marker';
-                    marker.style.left = (this.cellSize * (x + 1)) + 'px';
-                    marker.style.top = (this.cellSize * (y + 1)) + 'px';
-                    this.container.appendChild(marker);
-                    this.lastMove = { x, y };
-                } else {
-                    this.lastMove = null;
-                }
-            }
-
-            clearBoard() {
-                const stones = this.container.querySelectorAll('.stone, .last-move-marker');
-                stones.forEach(s => s.remove());
-                this.stones = {};
-                this.lastMove = null;
-            }
-
-            clearTrialStones() {
-                const trialStones = this.container.querySelectorAll('.stone.trial');
-                trialStones.forEach(s => {
-                    const x = parseInt(s.dataset.x);
-                    const y = parseInt(s.dataset.y);
-                    const key = `${x},${y}`;
-                    delete this.stones[key];
-                    s.remove();
-                });
-                this.trialStones = [];
-            }
-
-            redraw() {
-                // Clear and redraw everything
-                this.drawGrid();
-                this.drawStarPoints();
-                
-                // Redraw stones
-                Object.entries(this.stones).forEach(([key, stone]) => {
-                    const [x, y] = key.split(',').map(Number);
-                    this.placeStone(x, y, stone.color, stone.moveNumber, stone.isTrial);
-                });
-                
-                // Redraw last move marker
-                if (this.lastMove) {
-                    this.updateLastMove(this.lastMove.x, this.lastMove.y);
-                }
-            }
-
-            boardToPixel(x, y) {
-                return {
-                    left: this.cellSize * (x + 1),
-                    top: this.cellSize * (y + 1)
-                };
-            }
-
-            pixelToBoard(pixelX, pixelY) {
-                const rect = this.container.getBoundingClientRect();
-                const x = Math.round((pixelX - rect.left) / this.cellSize - 1);
-                const y = Math.round((pixelY - rect.top) / this.cellSize - 1);
-                
-                if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
-                    return { x, y };
-                }
-                return null;
-            }
-        }
-
-        // ==================== Main Application ====================
-        class GoApp {
-            constructor() {
-                this.board = new GoBoard('board');
-                this.parser = null;
-                this.currentMove = 0;
-                this.trialMode = false;
-                this.trialMoves = [];
-                
-                this.initEventListeners();
-                this.loadFromURL();
-            }
-
-            initEventListeners() {
-                // Drag and drop
-                const uploadArea = document.getElementById('uploadArea');
-                
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    uploadArea.addEventListener(eventName, (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }, false);
-                });
-
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    uploadArea.addEventListener(eventName, () => {
-                        uploadArea.classList.add('dragover');
-                    }, false);
-                });
-
-                ['dragleave', 'drop'].forEach(eventName => {
-                    uploadArea.addEventListener(eventName, () => {
-                        uploadArea.classList.remove('dragover');
-                    }, false);
-                });
-
-                uploadArea.addEventListener('drop', (e) => {
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        this.handleFile(files[0]);
-                    }
-                }, false);
-
-                // Board click for trial mode
-                this.board.container.addEventListener('click', (e) => {
-                    if (this.trialMode) {
-                        const pos = this.board.pixelToBoard(e.clientX, e.clientY);
-                        if (pos) {
-                            this.addTrialMove(pos.x, pos.y);
-                        }
-                    }
-                });
-
-                // Keyboard controls
-                document.addEventListener('keydown', (e) => {
-                    if (e.target.tagName === 'INPUT') return;
-                    
-                    switch(e.key) {
-                        case 'ArrowLeft':
-                            this.previousMove();
-                            break;
-                        case 'ArrowRight':
-                            this.nextMove();
-                            break;
-                        case 'Home':
-                            this.goToStart();
-                            break;
-                        case 'End':
-                            this.goToEnd();
-                            break;
-                    }
-                });
-            }
-
-            loadFromURL() {
-                const params = new URLSearchParams(window.location.search);
-                const sgfCompressed = params.get('sgf');
-                
-                if (sgfCompressed) {
-                    try {
-                        const sgfText = LZString.decompressFromBase64(sgfCompressed);
-                        if (sgfText) {
-                            this.loadSGF(sgfText);
-                        } else {
-                            this.showToast('无效的棋谱数据');
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        this.showToast('解析棋谱失败');
-                    }
-                }
-            }
-
-            loadSGF(sgfText) {
-                try {
-                    this.parser = new SGFParser(sgfText);
-                    const props = this.parser.getProperties();
-                    const moves = this.parser.getMoves();
-                    
-                    // Update info panel
-                    document.getElementById('blackPlayer').textContent = props.blackName || '-';
-                    document.getElementById('whitePlayer').textContent = props.whiteName || '-';
-                    document.getElementById('blackCaptures').textContent = props.blackCaptures || 0;
-                    document.getElementById('whiteCaptures').textContent = props.whiteCaptures || 0;
-                    document.getElementById('komi').textContent = props.komi ? props.komi + ' 目' : '-';
-                    document.getElementById('rules').textContent = props.rules || '-';
-                    document.getElementById('result').textContent = props.result || '-';
-                    document.getElementById('date').textContent = props.date || '-';
-                    
-                    // Reset board
-                    this.board.clearBoard();
-                    this.currentMove = 0;
-                    this.trialMoves = [];
-                    
-                    // Display first move if exists
-                    if (moves.length > 0) {
-                        this.updateMoveInfo();
-                    } else {
-                        document.getElementById('moveInfo').textContent = '无棋谱数据';
-                    }
-                    
-                    this.generateShareUrl();
-                    this.showToast('棋谱加载成功');
-                } catch (err) {
-                    console.error(err);
-                    this.showToast('解析 SGF 失败');
-                }
-            }
-
-            handleFile(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.loadSGF(e.target.result);
-                };
-                reader.readAsText(file);
-            }
-
-            handleFileSelect(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    this.handleFile(file);
-                }
-            }
-
-            displayMove(moveIndex) {
-                this.board.clearBoard();
-                
-                if (!this.parser || moveIndex <= 0) {
-                    return;
-                }
-                
-                const moves = this.parser.getMoves().slice(0, moveIndex);
-                moves.forEach(move => {
-                    this.board.placeStone(move.x, move.y, move.color, move.number);
-                });
-                
-                this.currentMove = moveIndex;
-                this.updateMoveInfo();
-            }
-
-            nextMove() {
-                if (!this.parser) return;
-                if (this.trialMode) {
-                    this.showToast('请先关闭试下模式');
-                    return;
-                }
-                
-                const totalMoves = this.parser.getMoves().length;
-                if (this.currentMove < totalMoves) {
-                    this.displayMove(this.currentMove + 1);
-                }
-            }
-
-            previousMove() {
-                if (!this.parser) return;
-                if (this.trialMode) {
-                    this.showToast('请先关闭试下模式');
-                    return;
-                }
-                
-                if (this.currentMove > 0) {
-                    this.displayMove(this.currentMove - 1);
-                }
-            }
-
-            goToStart() {
-                if (!this.parser) return;
-                if (this.trialMode) {
-                    this.showToast('请先关闭试下模式');
-                    return;
-                }
-                this.displayMove(0);
-            }
-
-            goToEnd() {
-                if (!this.parser) return;
-                if (this.trialMode) {
-                    this.showToast('请先关闭试下模式');
-                    return;
-                }
-                const totalMoves = this.parser.getMoves().length;
-                this.displayMove(totalMoves);
-            }
-
-            updateMoveInfo() {
-                const totalMoves = this.parser ? this.parser.getMoves().length : 0;
-                document.getElementById('moveInfo').textContent = 
-                    `第 ${this.currentMove} 手 / 共 ${totalMoves} 手`;
-            }
-
-            toggleTrialMode() {
-                this.trialMode = !this.trialMode;
-                const btn = document.getElementById('trialBtn');
-                const status = document.getElementById('trialStatus');
-                
-                if (this.trialMode) {
-                    btn.classList.add('active');
-                    status.textContent = '开启';
-                    this.showToast('试下模式已开启，点击棋盘落子');
-                } else {
-                    btn.classList.remove('active');
-                    status.textContent = '关闭';
-                    this.clearTrialMoves();
-                    this.showToast('试下模式已关闭');
-                }
-            }
-
-            addTrialMove(x, y) {
-                const key = `${x},${y}`;
-                if (this.board.stones[key]) {
-                    // Remove existing stone
-                    this.board.removeStone(x, y);
-                    this.trialMoves = this.trialMoves.filter(m => !(m.x === x && m.y === y));
-                } else {
-                    // Add new trial stone
-                    const moveNumber = this.trialMoves.length + 1;
-                    const color = (this.currentMove % 2 === 0) ? 'B' : 'W';
-                    const actualColor = (moveNumber % 2 === 1) ? color : (color === 'B' ? 'W' : 'B');
-                    
-                    this.board.placeStone(x, y, actualColor, moveNumber, true);
-                    this.trialMoves.push({ x, y, color: actualColor, number: moveNumber });
-                }
-                
-                // Renumber remaining trial stones
-                this.renumberTrialStones();
-            }
-
-            renumberTrialStones() {
-                this.trialMoves.forEach((move, index) => {
-                    move.number = index + 1;
-                    const stone = this.board.container.querySelector(
-                        `.stone.trial[data-x="${move.x}"][data-y="${move.y}"]`
-                    );
-                    if (stone) {
-                        stone.textContent = move.number;
-                    }
-                });
-            }
-
-            clearTrialMoves() {
-                this.board.clearTrialStones();
-                this.trialMoves = [];
-            }
-
-            generateShareUrl() {
-                if (!this.parser) {
-                    document.getElementById('shareUrl').value = '';
-                    return;
-                }
-                
-                // Get original SGF and compress it
-                // For simplicity, we reconstruct a minimal SGF from parsed moves
-                const moves = this.parser.getMoves();
-                const props = this.parser.getProperties();
-                
-                let sgf = '(;FF[4]';
-                if (props.blackName) sgf += `PB[${props.blackName}]`;
-                if (props.whiteName) sgf += `PW[${props.whiteName}]`;
-                if (props.komi) sgf += `KM[${props.komi}]`;
-                if (props.rules) sgf += `RU[${props.rules}]`;
-                if (props.result) sgf += `RE[${props.result}]`;
-                if (props.date) sgf += `DT[${props.date}]`;
-                
-                moves.forEach(move => {
-                    const coord = String.fromCharCode('a'.charCodeAt(0) + move.x) +
-                                 String.fromCharCode('a'.charCodeAt(0) + move.y);
-                    sgf += `;${move.color}[${coord}]`;
-                });
-                
-                sgf += ')';
-                
-                const compressed = LZString.compressToBase64(sgf);
-                const baseUrl = window.location.origin + window.location.pathname;
-                const shareUrl = `${baseUrl}?sgf=${encodeURIComponent(compressed)}`;
-                
-                document.getElementById('shareUrl').value = shareUrl;
-            }
-
-            copyShareUrl() {
-                const input = document.getElementById('shareUrl');
-                if (!input.value) {
-                    this.showToast('没有可分享的链接');
-                    return;
-                }
-                
-                input.select();
-                document.execCommand('copy');
-                this.showToast('链接已复制到剪贴板');
-            }
-
-            showToast(message) {
-                const toast = document.getElementById('toast');
-                toast.textContent = message;
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 2000);
-            }
-        }
-
-        // Initialize app
-        let app;
-        document.addEventListener('DOMContentLoaded', () => {
-            app = new GoApp();
-            // Expose handleFileSelect globally for the file input onchange handler
-            window.handleFileSelect = (event) => app.handleFileSelect(event);
+function loadSGF(sgf) {
+    sgfContent = sgf;
+    trialMoves = [];
+    updateTrialUI();
+    if (player) player.destroy();
+    
+    try {
+        player = new WGo.Player(document.getElementById("wgo-board"), {
+            sgf: sgf,
+            enableWheel: false,
+            markLastMove: true,
+            coordinates: true,
+            onSectionChange: updateInfoPanel
         });
+        document.addEventListener('keydown', (e) => {
+            if (!player || e.target.tagName === 'INPUT') return;
+            if (e.key === "ArrowLeft") player.previous();
+            else if (e.key === "ArrowRight") player.next();
+            else if (e.key === "Home") player.first();
+            else if (e.key === "End") player.last();
+        });
+        player.board.addEventListener("click", handleBoardClick);
+        updateInfoPanel();
+    } catch (e) { alert("SGF 格式错误"); console.error(e); }
+}
 
-        function showHelp() {
-            alert('围棋棋谱播放器使用说明：\n\n' +
-                  '📁 上传：点击或拖拽 SGF 文件\n' +
-                  '▶️ 播放：使用方向键或按钮控制\n' +
-                  '🔄 试下：开启后点击棋盘尝试变化\n' +
-                  '🔗 分享：自动生成压缩链接\n\n' +
-                  '快捷键：\n' +
-                  '← → 上一手/下一手\n' +
-                  'Home/End 首手/末手');
-        }
-    </script>
+function updateInfoPanel() {
+    if (!player || !player.game) return;
+    const info = player.game.root.get();
+    document.getElementById('player-black').textContent = info.PB || "未知棋手";
+    document.getElementById('player-white').textContent = info.PW || "未知棋手";
+    document.getElementById('rule-display').textContent = `贴目: ${info.KM || 0} (${info.RU || '未知'})`;
+    
+    let count = 0, node = player.game.root;
+    while(node.firstChild) { count++; node = node.firstChild; }
+    document.getElementById('move-display').textContent = `${player.k + 1} / ${count}`;
+    document.getElementById('capture-display').textContent = "提子统计 (MVP)";
+}
+
+function toggleTrialMode() {
+    isTrialMode = !isTrialMode;
+    updateTrialUI();
+    if (!isTrialMode) clearTrialMoves();
+    else if (player && !player.atLast() && confirm("建议跳转到末尾进行试下，是否跳转？")) player.last();
+}
+
+function updateTrialUI() {
+    const btn = document.getElementById('trial-mode-btn');
+    document.getElementById('trial-status').textContent = isTrialMode ? "(开)" : "(关)";
+    btn.classList.toggle('active', isTrialMode);
+}
+
+function handleBoardClick(x, y) {
+    if (!isTrialMode || !player) return;
+    if (player.board.getPosition().get(x, y) !== 0) return;
+    
+    let nextColor;
+    if (trialMoves.length === 0) {
+        let n = player.game.root;
+        while(n.firstChild) n = n.firstChild;
+        const lastIsBlack = n.get().B;
+        nextColor = lastIsBlack ? 2 : 1;
+    } else {
+        nextColor = trialMoves[trialMoves.length - 1].color === 1 ? 2 : 1;
+    }
+    
+    trialMoves.push({ x, y, color: nextColor, number: trialMoves.length + 1 });
+    drawTrialMoves();
+}
+
+function drawTrialMoves() {
+    if (!player) return;
+    player.board.layers = player.board.layers.filter(l => l.name !== 'trial-layer');
+    const layer = new WGo.Board.Layer('trial-layer');
+    layer.onDraw = function(ctx) {
+        trialMoves.forEach(m => {
+            const cx = this.board.getX(m.x), cy = this.board.getY(m.y), r = this.board.stoneRadius;
+            ctx.fillStyle = m.color === 1 ? '#000' : '#fff';
+            ctx.strokeStyle = m.color === 1 ? '#fff' : '#000';
+            ctx.beginPath(); ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = m.color === 1 ? '#fff' : '#000';
+            ctx.font = `bold ${r}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(m.number, cx, cy);
+        });
+    };
+    player.board.layers.push(layer);
+    player.board.update();
+}
+
+function clearTrialMoves() {
+    trialMoves = [];
+    if (player) {
+        player.board.layers = player.board.layers.filter(l => l.name !== 'trial-layer');
+        player.board.update();
+    }
+}
+
+function generateShareLink() {
+    if (!sgfContent) { alert("没有可分享的棋谱"); return; }
+    const compressed = LZString.compressToEncodedURIComponent(sgfContent);
+    document.getElementById('share-url').value = `${window.location.origin}${window.location.pathname}?sgf=${compressed}`;
+    copyLink();
+}
+
+function copyLink() {
+    const el = document.getElementById("share-url");
+    if (!el.value) return;
+    el.select();
+    navigator.clipboard.writeText(el.value).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = "已复制!";
+        setTimeout(() => btn.textContent = orig, 1500);
+    }).catch(() => alert("复制失败"));
+}
+</script>
 </body>
 </html>
