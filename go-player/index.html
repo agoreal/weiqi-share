@@ -1526,6 +1526,8 @@
         let app;
         document.addEventListener('DOMContentLoaded', () => {
             app = new GoApp();
+            // Expose handleFileSelect globally for the file input onchange handler
+            window.handleFileSelect = (event) => app.handleFileSelect(event);
         });
 
         function showHelp() {
